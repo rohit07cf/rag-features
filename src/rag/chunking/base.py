@@ -1,39 +1,21 @@
-"""Base interface for text chunkers."""
+"""Base interface for text chunkers (Strategy Pattern).
+
+All chunking strategies implement ChunkingStrategy. Selection is
+done by ChunkStrategy enum via the chunker registry in this module.
+"""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+
+# Re-export the Pydantic Chunk model so existing imports still work.
+from src.domain.models.chunk import Chunk
+
+__all__ = ["Chunk", "ChunkingStrategy", "get_chunker"]
 
 
-@dataclass
-class Chunk:
-    """A single chunk with text and metadata."""
-
-    text: str
-    chunk_index: int = 0
-    document_id: str = ""
-    page_numbers: list[int] = field(default_factory=list)
-    heading_path: list[str] = field(default_factory=list)
-    section_title: str = ""
-    token_count: int = 0
-    metadata: dict = field(default_factory=dict)
-
-    def to_dict(self) -> dict:
-        return {
-            "text": self.text,
-            "chunk_index": self.chunk_index,
-            "document_id": self.document_id,
-            "page_numbers": self.page_numbers,
-            "heading_path": self.heading_path,
-            "section_title": self.section_title,
-            "token_count": self.token_count,
-            **self.metadata,
-        }
-
-
-class BaseChunker(ABC):
-    """Interface that all chunkers implement."""
+class ChunkingStrategy(ABC):
+    """Strategy interface that all chunkers implement."""
 
     @abstractmethod
     def chunk(self, text: str, document_id: str = "", **kwargs) -> list[Chunk]:
@@ -43,3 +25,26 @@ class BaseChunker(ABC):
     @abstractmethod
     def name(self) -> str:
         ...
+
+
+# Keep backward-compatible alias
+BaseChunker = ChunkingStrategy
+
+
+def get_chunker(strategy: str) -> ChunkingStrategy:
+    """Registry/factory — returns a chunker instance for the given strategy name."""
+    from src.rag.chunking.adaptive import AdaptiveChunker
+    from src.rag.chunking.contextual_docintel import ContextualDocIntelChunker
+    from src.rag.chunking.heading_aware import HeadingAwareChunker
+    from src.rag.chunking.recursive import RecursiveChunker
+    from src.rag.chunking.token import TokenChunker
+
+    registry: dict[str, type[ChunkingStrategy]] = {
+        "recursive": RecursiveChunker,
+        "token": TokenChunker,
+        "heading_aware": HeadingAwareChunker,
+        "adaptive": AdaptiveChunker,
+        "contextual_docintel": ContextualDocIntelChunker,
+    }
+    cls = registry.get(strategy, RecursiveChunker)
+    return cls()

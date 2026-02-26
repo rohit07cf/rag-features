@@ -1,20 +1,15 @@
-"""Document upload endpoint — triggers Temporal ingestion workflow."""
+"""Document upload endpoint — thin route delegates to IngestionService."""
 
 from __future__ import annotations
-
-import os
-import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlmodel import Session
 
 from src.app.api.schemas import UploadResponse
 from src.app.deps import get_db
-from src.app.logging import get_logger
-from src.app.settings import get_settings
-from src.app.storage import assistants_repo
+from src.domain.models.errors import NotFoundError, ValidationError
+from src.domain.services.ingestion_service import IngestionService
 
-logger = get_logger(__name__)
 router = APIRouter(prefix="/v1/documents", tags=["documents"])
 
 
@@ -26,68 +21,27 @@ async def upload_documents(
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
-    """Upload one or more documents and start ingestion workflows."""
-    assistant = assistants_repo.get_assistant(db, assistant_id)
-    if not assistant:
-        raise HTTPException(404, "Assistant not found")
-    if assistant.type != "rag":
-        raise HTTPException(400, "Assistant is not a RAG assistant")
+    """Upload documents and start ingestion workflows."""
+    service = IngestionService(db)
 
-    settings = get_settings()
-    upload_dir = settings.upload_dir
-    os.makedirs(upload_dir, exist_ok=True)
+    try:
+        service.validate_upload(assistant_id, [f.filename or "file" for f in files])
+    except NotFoundError as e:
+        raise HTTPException(404, e.message)
+    except ValidationError as e:
+        raise HTTPException(400, e.message)
 
-    results: list[UploadResponse] = []
-
+    # Read file contents
+    file_data = []
     for f in files:
-        ext = os.path.splitext(f.filename or "file")[1].lower()
-        if ext not in (".pdf", ".docx", ".txt"):
-            raise HTTPException(400, f"Unsupported file type: {ext}")
-
-        doc_id = uuid.uuid4().hex[:12]
-        file_path = os.path.join(upload_dir, f"{doc_id}{ext}")
-
         content = await f.read()
-        with open(file_path, "wb") as fh:
-            fh.write(content)
+        file_data.append((f.filename or "unknown", content))
 
-        # Create ingestion record
-        record = assistants_repo.create_ingestion_record(
-            db,
-            assistant_id=assistant_id,
-            user_id=user_id,
-            document_id=doc_id,
-            filename=f.filename or "unknown",
-            state="pending",
-        )
+    results = await service.save_and_ingest(
+        assistant_id=assistant_id,
+        user_id=user_id,
+        chunk_strategy=chunk_strategy,
+        files=file_data,
+    )
 
-        # Start Temporal workflow (best-effort; if Temporal is down, record stays pending)
-        try:
-            from src.workflows.temporal_client import start_ingestion_workflow
-
-            wf_id = await start_ingestion_workflow(
-                ingestion_id=record.id,
-                document_id=doc_id,
-                file_path=file_path,
-                chunk_strategy=chunk_strategy,
-                assistant_id=assistant_id,
-                user_id=user_id,
-            )
-            assistants_repo.update_ingestion_state(
-                db, record.id, state="running", workflow_id=wf_id
-            )
-            record.workflow_id = wf_id
-        except Exception as exc:
-            logger.warning("Temporal workflow start failed: %s — marking running anyway", exc)
-            assistants_repo.update_ingestion_state(db, record.id, state="running")
-
-        results.append(
-            UploadResponse(
-                document_id=doc_id,
-                ingestion_id=record.id,
-                filename=f.filename or "unknown",
-                status=record.state,
-            )
-        )
-
-    return results
+    return [UploadResponse(**r) for r in results]

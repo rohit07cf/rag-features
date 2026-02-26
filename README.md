@@ -214,19 +214,65 @@ Bi-encoder (embedding) similarity is fast but imprecise. A cross-encoder jointly
 
 ---
 
+## Architecture & Design Principles
+
+The codebase follows a **three-layer architecture** with strict dependency direction:
+
+```
+API Layer  →  Domain Layer  →  Infrastructure Layer
+(routes)      (services,        (repos, adapters,
+               pipelines,        external clients)
+               protocols)
+```
+
+**Key principles:** SOLID, Separation of Concerns, Dependency Inversion via Protocols.
+
+### Design Patterns Used
+
+| Pattern | Where | Purpose |
+|---------|-------|---------|
+| **Strategy** | `ChunkingStrategy` + `get_chunker()` | Swap chunking algorithms without touching callers |
+| **Factory** | `create_llm()`, `get_chunker()` | Centralize object creation |
+| **Adapter** | `OpenAILLM`, `PineconeStore`, `OpenAIEmbedder` | Wrap external SDKs behind protocols |
+| **Repository** | `assistants_repo.py` | Single point of database access |
+| **Facade** | `ChatService` | Hides retrieval + LLM + memory behind clean interface |
+| **Template Method** | `RetrievalPipeline.run()` | Fixed 4-stage pipeline with pluggable components |
+| **Command** | `AssistantCreateCommand`, `ChatCommand` | Typed request objects between layers |
+| **Composition Root** | `container.py` | Single place that wires all dependencies |
+
+See [`docs/engineering_notes.md`](docs/engineering_notes.md) for detailed design decisions and tradeoffs.
+
+---
+
 ## Project Structure
 
 ```
 src/
-├── app/                        # FastAPI backend
-│   ├── main.py                 # App entry point
-│   ├── settings.py             # Pydantic settings
+├── domain/                     # Domain layer (framework-agnostic)
+│   ├── models/
+│   │   ├── enums.py            # Typed enums (AssistantType, LLMProvider, etc.)
+│   │   ├── errors.py           # Error taxonomy (NotFoundError, ValidationError, etc.)
+│   │   ├── chunk.py            # Pydantic Chunk model
+│   │   ├── assistant.py        # Assistant command/DTO models
+│   │   ├── ingestion.py        # Ingestion command/DTO models
+│   │   └── chat.py             # Chat command/result models
+│   ├── protocols.py            # Protocol interfaces (LLMClient, VectorStore, etc.)
+│   ├── services/
+│   │   ├── chat_service.py     # Facade: model-only + RAG chat
+│   │   ├── ingestion_service.py # Upload validation + workflow dispatch
+│   │   └── assistants_service.py # Assistant CRUD with domain errors
+│   └── pipelines/
+│       └── retrieval_pipeline.py # Template Method: embed → search → rerank → budget
+├── app/                        # API layer (thin routes)
+│   ├── main.py                 # App entry point + exception handlers
+│   ├── container.py            # Composition Root (DI wiring)
+│   ├── settings.py             # Pydantic settings with validators
 │   ├── api/
-│   │   ├── routes_assistants.py   # Assistant CRUD + rag_status
-│   │   ├── routes_documents.py    # Document upload → Temporal
-│   │   ├── routes_ingestions.py   # Ingestion progress polling
-│   │   ├── routes_chat.py         # Model-only + RAG chat
-│   │   └── schemas.py            # Request/response models
+│   │   ├── routes_assistants.py   # Delegates to AssistantsService
+│   │   ├── routes_documents.py    # Delegates to IngestionService
+│   │   ├── routes_ingestions.py   # Delegates to IngestionService
+│   │   ├── routes_chat.py         # Delegates to ChatService
+│   │   └── schemas.py            # Request/response models with enums
 │   └── storage/
 │       ├── models.py            # SQLModel tables
 │       ├── db.py                # Engine + table creation
@@ -249,19 +295,21 @@ src/
 │   └── activities/
 │       ├── extract_text.py     # PDF/DOCX → text
 │       ├── clean_text.py       # Normalize + clean
-│       ├── chunk_text.py       # Strategy routing
+│       ├── chunk_text.py       # Uses centralized get_chunker() registry
 │       ├── embed_batches.py    # OpenAI embeddings
 │       └── upsert_pinecone.py  # Vector upsert
-├── rag/                        # Core RAG library
-│   ├── chunking/               # 5 chunking strategies
-│   ├── embeddings/             # OpenAI embeddings
-│   ├── llms/                   # OpenAI + Anthropic + factory
-│   ├── vectorstore/            # Pinecone integration
-│   ├── retrieval/              # Retriever + rerankers
+├── rag/                        # Infrastructure layer (adapters)
+│   ├── chunking/               # 5 chunking strategies (Strategy Pattern)
+│   ├── embeddings/             # OpenAI embeddings (Adapter)
+│   ├── llms/                   # OpenAI + Anthropic + factory (Adapter + Factory)
+│   ├── vectorstore/            # Pinecone integration (Adapter)
+│   ├── retrieval/              # Retriever + rerankers (Strategy)
 │   ├── prompts/                # RAG prompt templates
 │   ├── memory/                 # Conversation memory
 │   └── utils/                  # Azure DocIntel, batching, IDs
-tests/                          # 51 tests (all passing)
+docs/
+│   └── engineering_notes.md    # Design decisions and tradeoffs
+tests/                          # 74 tests (all passing)
 ```
 
 ---
@@ -277,6 +325,24 @@ pytest tests/ --cov=src --cov-report=term-missing
 ```
 
 All tests run with mocked external services (no Azure, Pinecone, or LLM keys needed).
+
+---
+
+## Extensibility Guide
+
+### Add a New Chunking Strategy
+1. Create `src/rag/chunking/my_chunker.py` implementing `ChunkingStrategy`
+2. Add entry to `registry` dict in `src/rag/chunking/base.py:get_chunker()`
+3. Add enum value to `ChunkStrategy` in `src/domain/models/enums.py`
+
+### Add a New LLM Provider
+1. Create `src/rag/llms/my_provider.py` implementing the `LLMClient` protocol
+2. Add case to `create_llm()` in `src/rag/llms/factory.py`
+3. Add enum value to `LLMProvider` in `src/domain/models/enums.py`
+
+### Add a New Vector Store
+1. Create adapter implementing the `VectorStore` protocol from `src/domain/protocols.py`
+2. Update `get_vector_store()` in `src/app/container.py`
 
 ---
 
@@ -429,6 +495,31 @@ git push -u origin feat/streamlit-ui-gallery
 - [x] Theme file for professional styling
 - [x] 51 passing tests
 - [x] README with architecture, demo script, resume bullets
+
+---
+
+### PR 9: Production Hardening + Architecture Refactor
+**Branch:** `feat/production-hardening-refactor`
+```bash
+git checkout -b feat/production-hardening-refactor
+git add src/domain/ src/app/main.py src/app/container.py src/app/api/ \
+        src/rag/chunking/base.py src/workflows/activities/chunk_text.py \
+        tests/ docs/ README.md
+git commit -m "refactor: production hardening with SOLID patterns, service layer, DI container"
+git push -u origin feat/production-hardening-refactor
+```
+**PR Title:** refactor: production hardening — 3-layer architecture, services, protocols, error taxonomy
+**Checklist:**
+- [x] Domain layer: typed enums, Pydantic models, error hierarchy, protocols
+- [x] Service layer: ChatService (Facade), IngestionService, AssistantsService
+- [x] RetrievalPipeline (Template Method) with pluggable stages
+- [x] Composition Root in container.py for dependency wiring
+- [x] Thin routes delegating to services (no business logic in routes)
+- [x] FastAPI exception handlers mapping domain errors to HTTP responses
+- [x] Centralized chunker registry replacing duplicated _get_chunker()
+- [x] 74 passing tests (23 new) covering services, pipeline, error handlers
+- [x] Engineering notes documenting design patterns and tradeoffs
+- [x] README updated with architecture section and extensibility guide
 
 ---
 
