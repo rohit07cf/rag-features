@@ -1,14 +1,23 @@
-"""Application settings loaded from environment variables."""
+"""Application settings loaded from environment variables.
+
+Uses pydantic-settings for typed, validated configuration.
+"""
 
 from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Central configuration for the RAG platform."""
+    """Central configuration for the RAG platform.
+
+    All fields are loaded from environment variables (case-insensitive).
+    Required-for-feature fields (pinecone, azure) are validated at point-of-use,
+    not at startup, so the app starts without all keys configured.
+    """
 
     # --- LLM providers ---
     openai_api_key: str = ""
@@ -37,11 +46,19 @@ class Settings(BaseSettings):
 
     # --- App ---
     app_env: str = "local"
-    log_level: str = "INFO"
+    log_level: str = Field(default="INFO", pattern=r"^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
     upload_dir: str = "./data/uploads"
-    max_upload_size_mb: int = 50
+    max_upload_size_mb: int = Field(default=50, ge=1, le=500)
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
+
+    @property
+    def is_pinecone_configured(self) -> bool:
+        return bool(self.pinecone_api_key)
+
+    @property
+    def is_azure_docintel_configured(self) -> bool:
+        return bool(self.azure_docintel_endpoint and self.azure_docintel_key)
 
 
 @lru_cache

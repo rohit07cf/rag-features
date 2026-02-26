@@ -46,32 +46,40 @@ class TestCleanText:
 
 
 class TestChunkText:
-    def test_get_chunker_recursive(self):
-        from src.workflows.activities.chunk_text import _get_chunker
+    """Tests for centralized chunker registry (get_chunker from base.py)."""
 
-        chunker = _get_chunker("recursive")
+    def test_get_chunker_recursive(self):
+        from src.rag.chunking.base import get_chunker
+
+        chunker = get_chunker("recursive")
         assert chunker.name == "recursive"
 
     def test_get_chunker_token(self):
-        from src.workflows.activities.chunk_text import _get_chunker
+        from src.rag.chunking.base import get_chunker
 
-        chunker = _get_chunker("token")
+        chunker = get_chunker("token")
         assert chunker.name == "token"
 
     def test_get_chunker_heading(self):
-        from src.workflows.activities.chunk_text import _get_chunker
+        from src.rag.chunking.base import get_chunker
 
-        chunker = _get_chunker("heading_aware")
+        chunker = get_chunker("heading_aware")
         assert chunker.name == "heading_aware"
 
     def test_get_chunker_adaptive(self):
-        from src.workflows.activities.chunk_text import _get_chunker
+        from src.rag.chunking.base import get_chunker
 
-        chunker = _get_chunker("adaptive")
+        chunker = get_chunker("adaptive")
         assert chunker.name == "adaptive"
 
     def test_get_chunker_default(self):
-        from src.workflows.activities.chunk_text import _get_chunker
+        from src.rag.chunking.base import get_chunker
 
-        chunker = _get_chunker("unknown_strategy")
+        chunker = get_chunker("unknown_strategy")
         assert chunker.name == "recursive"  # Falls back to recursive
+
+    def test_get_chunker_contextual(self):
+        from src.rag.chunking.base import get_chunker
+
+        chunker = get_chunker("contextual_docintel")
+        assert chunker.name == "contextual_docintel"

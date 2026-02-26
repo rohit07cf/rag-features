@@ -1,4 +1,8 @@
-"""Assistants CRUD endpoints."""
+"""Assistants CRUD endpoints — thin route layer.
+
+Validation is handled by Pydantic enums in schemas (AssistantType, LLMProvider).
+Routes only orchestrate: parse request → delegate to repo → return response.
+"""
 
 from __future__ import annotations
 
@@ -14,11 +18,8 @@ router = APIRouter(prefix="/v1/assistants", tags=["assistants"])
 
 @router.post("", response_model=AssistantResponse, status_code=201)
 def create_assistant(body: AssistantCreate, db: Session = Depends(get_db)):
-    if body.type not in ("model_only", "rag"):
-        raise HTTPException(400, "type must be 'model_only' or 'rag'")
-    if body.provider not in ("openai", "anthropic"):
-        raise HTTPException(400, "provider must be 'openai' or 'anthropic'")
-    assistant = assistants_repo.create_assistant(db, **body.model_dump())
+    # Pydantic enum validation on AssistantCreate handles type/provider checks.
+    assistant = assistants_repo.create_assistant(db, **body.model_dump(mode="json"))
     return assistant
 
 

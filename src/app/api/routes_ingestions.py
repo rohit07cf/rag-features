@@ -1,4 +1,4 @@
-"""Ingestion status endpoints."""
+"""Ingestion status endpoint — thin route delegates to IngestionService."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ from sqlmodel import Session
 
 from src.app.api.schemas import IngestionStatusResponse
 from src.app.deps import get_db
-from src.app.storage import assistants_repo
+from src.domain.models.errors import NotFoundError
+from src.domain.services.ingestion_service import IngestionService
 
 router = APIRouter(prefix="/v1/ingestions", tags=["ingestions"])
 
@@ -15,34 +16,10 @@ router = APIRouter(prefix="/v1/ingestions", tags=["ingestions"])
 @router.get("/{ingestion_id}/status", response_model=IngestionStatusResponse)
 def get_ingestion_status(ingestion_id: str, db: Session = Depends(get_db)):
     """Return current state and progress of an ingestion workflow."""
-    record = assistants_repo.get_ingestion_record(db, ingestion_id)
-    if not record:
-        raise HTTPException(404, "Ingestion record not found")
-
-    # Try to query Temporal for live progress (best-effort)
+    service = IngestionService(db)
     try:
-        from src.workflows.temporal_client import query_ingestion_progress
+        result = service.get_ingestion_status(ingestion_id)
+    except NotFoundError as e:
+        raise HTTPException(404, e.message)
 
-        import asyncio
-
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # We're inside an async context already — just return DB state
-            pass
-        else:
-            progress = loop.run_until_complete(
-                query_ingestion_progress(record.workflow_id)
-            )
-            if progress:
-                record.current_step = progress.get("current_step", record.current_step)
-                record.progress_pct = progress.get("progress_pct", record.progress_pct)
-    except Exception:
-        pass  # Temporal may be unavailable; fall back to DB state
-
-    return IngestionStatusResponse(
-        ingestion_id=record.id,
-        state=record.state,
-        current_step=record.current_step,
-        progress_pct=record.progress_pct,
-        error_message=record.error_message,
-    )
+    return IngestionStatusResponse(**result)

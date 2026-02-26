@@ -1,11 +1,17 @@
-"""Pydantic request / response schemas for the API."""
+"""Pydantic request / response schemas for the API layer.
+
+These are thin API-boundary models. Enums enforce valid values
+via Pydantic validation, eliminating manual if-chains in routes.
+"""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field
+
+from src.domain.models.enums import AssistantType, ChunkStrategy, LLMProvider
 
 
 # ── Assistants ────────────────────────────────────────────────────
@@ -13,11 +19,11 @@ from pydantic import BaseModel, Field
 class AssistantCreate(BaseModel):
     user_id: str
     name: str
-    type: str = Field(description="model_only | rag")
-    provider: str = Field(description="openai | anthropic")
+    type: AssistantType
+    provider: LLMProvider
     model: str
     system_prompt: str = ""
-    default_chunk_strategy: str = "recursive"
+    default_chunk_strategy: ChunkStrategy = ChunkStrategy.RECURSIVE
 
 
 class AssistantResponse(BaseModel):
@@ -75,13 +81,22 @@ class SourceReference(BaseModel):
     chunk_id: str
     text_snippet: str
     score: float
-    page_numbers: list[int] = []
-    heading_path: list[str] = []
+    page_numbers: list[int] = Field(default_factory=list)
+    heading_path: list[str] = Field(default_factory=list)
 
 
 class ChatResponse(BaseModel):
     answer: str
     conversation_id: str
-    sources: list[SourceReference] = []
+    sources: list[SourceReference] = Field(default_factory=list)
     model_used: str = ""
     provider: str = ""
+
+
+# ── Error ────────────────────────────────────────────────────────
+
+class ErrorResponse(BaseModel):
+    """Consistent error response envelope."""
+    error_code: str
+    message: str
+    details: str = ""

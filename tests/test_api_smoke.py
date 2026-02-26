@@ -69,7 +69,8 @@ class TestAssistantsEndpoints:
         data = r.json()
         assert len(data) >= 2
 
-    def test_invalid_type(self, client):
+    def test_invalid_type_rejected(self, client):
+        """Pydantic enum validation rejects invalid type at schema level (422)."""
         r = client.post("/v1/assistants", json={
             "user_id": "test_user",
             "name": "Bad",
@@ -77,9 +78,10 @@ class TestAssistantsEndpoints:
             "provider": "openai",
             "model": "gpt-4o",
         })
-        assert r.status_code == 400
+        assert r.status_code == 422
 
-    def test_invalid_provider(self, client):
+    def test_invalid_provider_rejected(self, client):
+        """Pydantic enum validation rejects invalid provider at schema level (422)."""
         r = client.post("/v1/assistants", json={
             "user_id": "test_user",
             "name": "Bad",
@@ -87,7 +89,7 @@ class TestAssistantsEndpoints:
             "provider": "gemini",
             "model": "gemini-pro",
         })
-        assert r.status_code == 400
+        assert r.status_code == 422
 
     def test_404_not_found(self, client):
         r = client.get("/v1/assistants/nonexistent")
