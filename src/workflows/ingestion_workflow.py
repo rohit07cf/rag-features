@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
-from temporalio import workflow
+from temporalio import activity, workflow
 
 with workflow.unsafe.imports_passed_through():
     from src.workflows.activities.chunk_text import chunk_text
@@ -123,7 +123,7 @@ class IngestionWorkflow:
             raise
 
 
-@workflow.activity.defn(name="update_ingestion_db")
+@activity.defn(name="update_ingestion_db")
 async def _update_ingestion_db(params: dict) -> None:
     """Update the ingestion record in the database."""
     from sqlmodel import Session
