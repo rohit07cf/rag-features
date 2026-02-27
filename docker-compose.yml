@@ -1,14 +1,38 @@
 version: "3.9"
 
 services:
+  # --- PostgreSQL (Temporal persistence) ---
+  temporal-db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    volumes:
+      - temporal-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   # --- Temporal Server ---
   temporal:
     image: temporalio/auto-setup:1.24.2
     ports:
       - "7233:7233"
     environment:
-      - DB=sqlite
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-db
       - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    depends_on:
+      temporal-db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "temporal", "workflow", "list", "--address", "temporal:7233"]
       interval: 10s
@@ -84,3 +108,4 @@ services:
 
 volumes:
   app-data:
+  temporal-db-data:
