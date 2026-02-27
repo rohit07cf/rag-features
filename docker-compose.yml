@@ -30,6 +30,8 @@ services:
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=temporal-db
       - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    volumes:
+      - ./config/dynamicconfig:/etc/temporal/config/dynamicconfig
     depends_on:
       temporal-db:
         condition: service_healthy
