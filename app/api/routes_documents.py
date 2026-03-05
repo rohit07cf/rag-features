@@ -33,20 +33,40 @@ MAX_FILE_SIZE_MB = 50
 
 @router.post("/upload", response_model=list[UploadResponse])
 async def upload_documents(
-    assistant_id: str = Form(...),
-    user_id: str = Form("demo_user"),
-    chunk_strategy: str = Form("recursive"),
-    files: list[UploadFile] = File(...),
+    assistant_id: str = Form(..., description="ID of the RAG assistant to upload documents to"),
+    user_id: str = Form("demo_user", description="User identifier for tracking"),
+    chunk_strategy: str = Form(
+        "recursive",
+        description="Text chunking strategy: recursive, token, heading_aware, adaptive, contextual_docintel",
+    ),
+    files: list[UploadFile] = File(
+        ...,
+        description="Multiple files to upload. Supported: PDF (.pdf), Word (.docx), Text (.txt). Max 50MB per file.",
+    ),
     db: Session = Depends(get_db),
     settings=Depends(get_settings),
 ):
-    """Upload documents and start ingestion workflows.
+    """Upload multiple documents and start ingestion workflows.
 
-    Supports multiple files with size validation:
-    - Accepts PDFs, Word docs, text files, etc.
-    - Validates each file ≤ configured MB limit (default: 50MB)
-    - Returns ingestion IDs for progress tracking
-    - Files processed asynchronously via Temporal workflows
+    **Supported File Types:**
+    - **PDF** (.pdf) - `application/pdf`
+    - **Word** (.docx) - `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+    - **Text** (.txt) - `text/plain`
+
+    **Features:**
+    - Multiple file upload in single request
+    - Automatic file type validation
+    - Size limit: 50MB per file (configurable)
+    - Asynchronous processing via Temporal workflows
+    - Real-time progress tracking
+
+    **Process:**
+    1. Validate files (type, size, assistant permissions)
+    2. Save files to temporary storage
+    3. Start ingestion workflows (extract → clean → chunk → embed → store)
+    4. Return ingestion IDs for progress monitoring
+
+    Returns list of upload results with document IDs and ingestion tracking info.
     """
     service = IngestionService(db)
 

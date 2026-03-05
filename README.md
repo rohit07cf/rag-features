@@ -116,7 +116,8 @@ The landing page displays all your assistants in a card grid. Each card shows th
 Choose between **Model-only Chat** (direct LLM) or **RAG Chat** (with document retrieval). Select your LLM provider (OpenAI or Anthropic) and model. For RAG assistants, pick a default chunking strategy.
 
 ### 3. Upload Documents (RAG only)
-Upload PDF or DOCX files. Choose a chunking strategy (including Azure Doc Intelligence contextual). Watch the real-time progress bar as Temporal orchestrates the 5-step ingestion pipeline.
+Upload multiple PDF, DOCX, or TXT files simultaneously. Choose from 5 chunking strategies (recursive, token-based, heading-aware, adaptive, or Azure Doc Intelligence contextual). Watch real-time progress bars as Temporal orchestrates the 5-step ingestion pipeline for each file.
+
 
 ### 4. Chat
 Converse with your assistant. RAG assistants provide cited answers with expandable source references showing page numbers, heading paths, and relevance scores.
@@ -137,12 +138,14 @@ curl -X POST http://localhost:8000/v1/assistants \
     "model": "gpt-4.1-mini"
   }'
 
-# Upload a document
+# Upload multiple documents (PDF, DOCX, TXT supported)
 curl -X POST http://localhost:8000/v1/documents/upload \
   -F "assistant_id=<ASSISTANT_ID>" \
   -F "user_id=demo_user" \
   -F "chunk_strategy=recursive" \
-  -F "files=@report.pdf"
+  -F "files=@report.pdf" \
+  -F "files=@manual.docx" \
+  -F "files=@notes.txt"
 
 # Check ingestion status
 curl http://localhost:8000/v1/ingestions/<INGESTION_ID>/status
@@ -170,7 +173,7 @@ curl http://localhost:8000/v1/assistants/<ASSISTANT_ID>/rag_status
 2. Click **"Create New Assistant"**
 3. Set type to **RAG**, provider to **OpenAI**, model to **gpt-4.1-mini**
 4. Click **Create**, then **Upload Documents**
-5. Upload any PDF — watch the **Temporal ingestion progress bar** in real-time
+5. Upload multiple PDFs, DOCX, or TXT files — watch the **real-time progress bars** as Temporal processes each file through the ingestion pipeline
 6. When complete, the chat page opens automatically
 7. Ask: **"Give me 5 bullet summary with citations and page numbers"**
 8. Expand the **Sources** panel to see cited chunks with page numbers and heading paths

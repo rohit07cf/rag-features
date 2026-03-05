@@ -23,17 +23,39 @@ class IngestionService:
         self._settings = get_settings()
 
     def validate_upload(self, assistant_id: str, filenames: list[str]) -> None:
-        """Validate assistant exists, is RAG, and files are supported."""
+        """Validate assistant exists, is RAG, and files are supported.
+
+        Supported formats:
+        - PDF (.pdf) - Portable Document Format
+        - DOCX (.docx) - Microsoft Word Open XML
+        - TXT (.txt) - Plain text files
+        """
         assistant = assistants_repo.get_assistant(self._db, assistant_id)
         if not assistant:
             raise NotFoundError("Assistant not found", details=f"id={assistant_id}")
         if assistant.type != "rag":
-            raise ValidationError("Assistant is not a RAG assistant")
+            raise ValidationError(
+                "Assistant is not a RAG assistant",
+                details="Only RAG assistants can process documents. Create a RAG assistant first.",
+            )
+
+        # Supported file extensions and their descriptions
+        supported_types = {
+            ".pdf": "PDF documents",
+            ".docx": "Word documents (.docx)",
+            ".txt": "Plain text files",
+        }
 
         for fname in filenames:
             ext = os.path.splitext(fname)[1].lower()
-            if ext not in (".pdf", ".docx", ".txt"):
-                raise ValidationError(f"Unsupported file type: {ext}")
+            if ext not in supported_types:
+                supported_list = ", ".join(
+                    f"{ext} ({desc})" for ext, desc in supported_types.items()
+                )
+                raise ValidationError(
+                    f"Unsupported file type: {ext}",
+                    details=f"Supported formats: {supported_list}. File: {fname}",
+                )
 
     async def save_and_ingest(
         self,

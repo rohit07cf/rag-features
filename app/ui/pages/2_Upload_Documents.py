@@ -53,108 +53,139 @@ chunk_strategy = st.selectbox(
 
 # ── File uploader ────────────────────────────────────────────────
 uploaded_files = st.file_uploader(
-    "Upload PDF or DOCX files",
+    "Upload documents (PDF, DOCX, TXT)",
     type=["pdf", "docx", "txt"],
     accept_multiple_files=True,
+    help="Select one or more files. Maximum 50MB per file. Supported: PDF, Word (.docx), Text (.txt)",
 )
 
-if uploaded_files and st.button("🚀 Start Ingestion", type="primary", use_container_width=True):
-    from app.ui.api_client import get_ingestion_status, upload_documents
+if uploaded_files:
+    # Show file details
+    st.markdown("### 📁 Selected Files")
+    total_size = 0
+    for i, file in enumerate(uploaded_files, 1):
+        size_mb = len(file.read()) / (1024 * 1024)
+        total_size += size_mb
+        file.seek(0)  # Reset file pointer
 
-    # Prepare files
-    files_data = []
+        # Determine mime type
+        if file.name.lower().endswith(".pdf"):
+            mime_type = "application/pdf"
+            icon = "📄"
+        elif file.name.lower().endswith(".docx"):
+            mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            icon = "📝"
+        elif file.name.lower().endswith(".txt"):
+            mime_type = "text/plain"
+            icon = "📃"
+        else:
+            mime_type = "application/octet-stream"
+            icon = "❓"
+
+        st.write(f"{icon} **{file.name}** - {size_mb:.1f} MB ({mime_type})")
+
+    st.markdown(f"**Total: {len(uploaded_files)} files, {total_size:.1f} MB**")
+
+    # Size validation
+    max_size_mb = 50
+    oversized_files = [
+        f.name for f in uploaded_files if len(f.read()) / (1024 * 1024) > max_size_mb
+    ]
     for f in uploaded_files:
-        content = f.read()
-        mime = "application/pdf" if f.name.endswith(".pdf") else "application/octet-stream"
-        files_data.append((f.name, content, mime))
+        f.seek(0)  # Reset all file pointers
 
-    # Upload
-    with st.spinner("Uploading files..."):
-        try:
-            results = upload_documents(
-                assistant_id=assistant["id"],
-                user_id=st.session_state["user_id"],
-                chunk_strategy=chunk_strategy,
-                files=files_data,
-            )
-        except Exception as e:
-            st.error(f"Upload failed: {e}")
-            st.stop()
-
-    st.success(f"Uploaded {len(results)} file(s). Ingestion started!")
-
-    # ── Progress tracking ────────────────────────────────────────
-    st.markdown("### Ingestion Progress")
-
-    ingestion_ids = [r["ingestion_id"] for r in results]
-    filenames = {r["ingestion_id"]: r["filename"] for r in results}
-
-    # Create progress containers
-    progress_containers = {}
-    for ing_id in ingestion_ids:
-        fname = filenames.get(ing_id, "file")
-        progress_containers[ing_id] = {
-            "label": st.empty(),
-            "bar": st.progress(0),
-            "status": st.empty(),
-        }
-        progress_containers[ing_id]["label"].markdown(f"**{fname}**")
-
-    overall_bar = st.progress(0)
-    status_text = st.empty()
-
-    # Poll loop
-    all_done = False
-    max_polls = 300  # 5 minutes max
-
-    for poll in range(max_polls):
-        done_count = 0
-        total_pct = 0
-
-        for ing_id in ingestion_ids:
-            try:
-                status = get_ingestion_status(ing_id)
-            except Exception:
-                status = {
-                    "state": "unknown",
-                    "progress_pct": 0,
-                    "current_step": "unknown",
-                    "error_message": "",
-                }
-
-            pct = status.get("progress_pct", 0)
-            step = status.get("current_step", "")
-            state = status.get("state", "")
-            total_pct += pct
-
-            pc = progress_containers[ing_id]
-            pc["bar"].progress(min(pct, 100))
-
-            if state == "succeeded":
-                pc["status"].success("✅ Complete")
-                done_count += 1
-            elif state == "failed":
-                pc["status"].error(f"❌ Failed: {status.get('error_message', '')}")
-                done_count += 1
-            else:
-                pc["status"].info(f"⏳ {step} ({pct}%)")
-
-        avg_pct = total_pct // len(ingestion_ids) if ingestion_ids else 0
-        overall_bar.progress(min(avg_pct, 100))
-        status_text.markdown(
-            f"**Overall:** {done_count}/{len(ingestion_ids)} complete ({avg_pct}%)"
-        )
-
-        if done_count >= len(ingestion_ids):
-            all_done = True
-            break
-
-        time.sleep(1)
-
-    if all_done:
-        st.balloons()
-        st.success("🎉 All documents ingested! Your assistant is ready for chat.")
-        if st.button("💬 Start Chatting →", type="primary", use_container_width=True):
-            st.switch_page("src/ui/pages/3_Chat_Assistant.py")
+    if oversized_files:
+        st.error(f"❌ Files exceed {max_size_mb}MB limit: {', '.join(oversized_files)}")
+        st.button("🚀 Start Ingestion", disabled=True)
     else:
-        st.warning("Ingestion is still running. You can check back later or start chatting.")
+        if st.button("🚀 Start Ingestion", type="primary", use_container_width=True):
+            from app.ui.api_client import get_ingestion_status, upload_documents
+
+            # Prepare files with proper mime types
+            files_data = []
+            for f in uploaded_files:
+                content = f.read()
+
+                # Determine correct mime type based on extension
+                if f.name.lower().endswith(".pdf"):
+                    mime = "application/pdf"
+                elif f.name.lower().endswith(".docx"):
+                    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                elif f.name.lower().endswith(".txt"):
+                    mime = "text/plain"
+                else:
+                    mime = "application/octet-stream"
+
+                files_data.append((f.name, content, mime))
+
+            # Upload with progress
+            with st.spinner(f"Uploading {len(files_data)} file(s)... This may take a moment."):
+                try:
+                    results = upload_documents(
+                        assistant_id=assistant["id"],
+                        user_id=st.session_state["user_id"],
+                        chunk_strategy=chunk_strategy,
+                        files=files_data,
+                    )
+                except Exception as e:
+                    st.error(f"❌ Upload failed: {e}")
+                    st.stop()
+
+            st.success(
+                f"✅ Successfully uploaded {len(results)} file(s)! Ingestion workflows started."
+            )
+
+            # ── Progress tracking ────────────────────────────────────────
+            st.markdown("### 📊 Ingestion Progress")
+
+            ingestion_ids = [r["ingestion_id"] for r in results]
+            filenames = {r["ingestion_id"]: r["filename"] for r in results}
+
+            # Create progress containers
+            progress_containers = {}
+            for ing_id in ingestion_ids:
+                fname = filenames.get(ing_id, "file")
+                with st.container():
+                    st.markdown(f"**{fname}**")
+                    progress_containers[ing_id] = {
+                        "bar": st.progress(0),
+                        "status": st.empty(),
+                    }
+
+            # Poll for progress
+            import time
+
+            completed = set()
+
+            while len(completed) < len(ingestion_ids):
+                for ing_id in ingestion_ids:
+                    if ing_id in completed:
+                        continue
+
+                    try:
+                        status = get_ingestion_status(ing_id)
+                        progress_pct = status.get("progress_pct", 0)
+                        current_step = status.get("current_step", "unknown")
+
+                        # Update progress
+                        progress_containers[ing_id]["bar"].progress(min(progress_pct, 100))
+                        progress_containers[ing_id]["status"].text(
+                            f"{current_step} ({progress_pct}%)"
+                        )
+
+                        if current_step == "succeeded":
+                            progress_containers[ing_id]["status"].text("✅ Complete")
+                            completed.add(ing_id)
+                        elif current_step == "failed":
+                            progress_containers[ing_id]["status"].text("❌ Failed")
+                            completed.add(ing_id)
+
+                    except Exception as e:
+                        progress_containers[ing_id]["status"].text(f"⚠️ Error: {e}")
+
+                if len(completed) < len(ingestion_ids):
+                    time.sleep(2)  # Poll every 2 seconds
+
+            st.success("🎉 All files processed! You can now chat with your documents.")
+else:
+    st.info("💡 Select files to upload and configure your ingestion settings above.")
