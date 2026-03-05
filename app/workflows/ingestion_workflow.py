@@ -30,7 +30,7 @@ with workflow.unsafe.imports_passed_through():
     from app.workflows.activities.clean_text import clean_text
     from app.workflows.activities.embed_batches import embed_batches
     from app.workflows.activities.extract_text import extract_text
-    from app.workflows.activities.upsert_pinecone import upsert_pinecone
+    from app.workflows.activities.save_chunks import save_chunks_to_file
 
 
 @workflow.defn
@@ -105,28 +105,25 @@ class IngestionWorkflow:
                 start_to_close_timeout=activity_timeout,
             )
 
-            # Step 4: Convert Chunks to Vector Embeddings
-            # Transform text into numerical vectors (arrays of numbers)
-            # Example: "Solar power is renewable" → [0.1, -0.3, 0.8, ...]
-            # Enables mathematical similarity comparison
-            self._progress = {"current_step": "embedding", "progress_pct": 60}
-            embedded_chunks = await workflow.execute_activity(
-                embed_batches,
+            # Save chunks to temp file to avoid large Temporal payloads
+            # (Temporal has a hard limit of 4MB, we're processing documents that generate millions of bytes)
+            chunks_file = await workflow.execute_activity(
+                save_chunks_to_file,
                 {"chunks": chunks, "document_id": document_id},
-                start_to_close_timeout=activity_timeout,
+                start_to_close_timeout=timedelta(seconds=60),
             )
 
-            # Step 5: Store Vectors in Database
-            # Save embeddings to Pinecone vector database
-            # Organized by assistant_id for multi-tenant isolation
-            # Enables fast similarity search during RAG queries
-            self._progress = {"current_step": "upserting", "progress_pct": 80}
+            # Step 4: Convert Chunks to Vector Embeddings and Store
+            # Transform text into numerical vectors and save to Pinecone
+            # Example: "Solar power is renewable" → [0.1, -0.3, 0.8, ...] → stored
+            # Enables mathematical similarity comparison for future queries
+            self._progress = {"current_step": "embedding", "progress_pct": 60}
             result = await workflow.execute_activity(
-                upsert_pinecone,
+                embed_batches,
                 {
-                    "embedded_chunks": embedded_chunks,
-                    "assistant_id": assistant_id,
+                    "chunks_file": chunks_file,
                     "document_id": document_id,
+                    "assistant_id": assistant_id
                 },
                 start_to_close_timeout=activity_timeout,
             )

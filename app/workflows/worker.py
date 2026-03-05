@@ -14,7 +14,7 @@ from app.workflows.activities.chunk_text import chunk_text
 from app.workflows.activities.clean_text import clean_text
 from app.workflows.activities.embed_batches import embed_batches
 from app.workflows.activities.extract_text import extract_text
-from app.workflows.activities.upsert_pinecone import upsert_pinecone
+from app.workflows.activities.save_chunks import save_chunks_to_file
 from app.workflows.ingestion_workflow import IngestionWorkflow, _update_ingestion_db
 
 
@@ -37,8 +37,8 @@ async def main():
             extract_text,
             clean_text,
             chunk_text,
+            save_chunks_to_file,
             embed_batches,
-            upsert_pinecone,
             _update_ingestion_db,
         ],
     )

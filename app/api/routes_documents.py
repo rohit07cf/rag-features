@@ -14,7 +14,7 @@ Real-time upload flow:
 """
 
 from __future__ import annotations
-
+from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlmodel import Session
 from typing import List
@@ -32,7 +32,32 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB in bytes
 MAX_FILE_SIZE_MB = 50
 
 
-@router.post("/upload", response_model=list[UploadResponse])
+@router.post(
+    "/upload",
+    response_model=list[UploadResponse],
+    openapi_extra={
+        "requestBody": {
+            "content": {
+                "multipart/form-data": {
+                    "schema": {
+                        "type": "object",
+                        "required": ["assistant_id", "files"],
+                        "properties": {
+                            "assistant_id": {"type": "string"},
+                            "user_id": {"type": "string", "default": "demo_user"},
+                            "chunk_strategy": {"type": "string", "default": "recursive"},
+                            "files": {
+                                "type": "array",
+                                "items": {"type": "string", "format": "binary"},
+                            },
+                        },
+                    }
+                }
+            },
+            "required": True,
+        }
+    },
+)
 async def upload_documents(
     assistant_id: str = Form(..., description="ID of the RAG assistant to upload documents to"),
     user_id: str = Form("demo_user", description="User identifier for tracking"),
@@ -40,10 +65,7 @@ async def upload_documents(
         "recursive",
         description="Text chunking strategy: recursive, token, heading_aware, adaptive, contextual_docintel",
     ),
-    files: List[UploadFile] = File(
-        min_items=1,
-        description="Multiple files to upload. Supported: PDF (.pdf), Word (.docx), Text (.txt). Max 50MB per file.",
-    ),
+    files: Annotated[List[UploadFile], File(description="Multiddple PDF/DOCX/TXT files. Max 50MB each.")] = ...,
     db: Session = Depends(get_db),
     settings=Depends(get_settings),
 ):

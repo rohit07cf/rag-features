@@ -5,6 +5,10 @@ Uses the centralized get_chunker() registry from base.py (Strategy Pattern).
 
 from __future__ import annotations
 
+import json
+import os
+import tempfile
+
 from temporalio import activity
 
 from app.rag.chunking.base import get_chunker
@@ -18,7 +22,7 @@ async def chunk_text(params: dict) -> list[dict]:
         params: {"text": str, "document_id": str, "strategy": str, "file_path": str}
 
     Returns:
-        List of chunk dicts
+        List of chunk dicts (for backward compatibility - workflow will save to file)
     """
     text = params["text"]
     document_id = params["document_id"]

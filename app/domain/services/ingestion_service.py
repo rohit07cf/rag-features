@@ -104,7 +104,7 @@ class IngestionService:
                     user_id=user_id,
                 )
                 assistants_repo.update_ingestion_state(
-                    self._db, record.id, state="running", workflow_id=wf_id
+                    self._db, record.id, state="running"
                 )
                 record.workflow_id = wf_id
             except Exception as exc:
