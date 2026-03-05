@@ -96,13 +96,13 @@ open http://localhost:8080    # Temporal UI
 pip install -e ".[dev]"
 
 # Start Temporal (needs a running Temporal server)
-python -m src.workflows.worker &
+python -m app.workflows.worker &
 
 # Start FastAPI
-uvicorn src.app.main:app --reload --port 8000 &
+uvicorn app.main:app --reload --port 8000 &
 
 # Start Streamlit
-streamlit run src/ui/streamlit_app.py --server.port 8501
+streamlit run app/ui/streamlit_app.py --server.port 8501
 ```
 
 ---
@@ -321,7 +321,7 @@ tests/                          # 74 tests (all passing)
 pytest tests/ -v
 
 # With coverage
-pytest tests/ --cov=src --cov-report=term-missing
+pytest tests/ --cov=app --cov-report=term-missing
 ```
 
 All tests run with mocked external services (no Azure, Pinecone, or LLM keys needed).

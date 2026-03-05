@@ -16,8 +16,8 @@ os.environ["APP_ENV"] = "test"
 def client():
     os.makedirs("test_data", exist_ok=True)
 
-    from src.app.main import app
-    from src.app.storage.db import create_tables
+    from app.main import app
+    from app.storage.db import create_tables
 
     create_tables()
 

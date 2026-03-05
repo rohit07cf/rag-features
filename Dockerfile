@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy source first (editable install needs the package to exist)
 COPY pyproject.toml .
-COPY src/ src/
+COPY app/ app/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -e ".[dev]"

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-from src.app.storage.assistants_repo import (
+from app.storage.assistants_repo import (
     create_assistant,
     create_ingestion_record,
     get_assistant,

@@ -23,7 +23,7 @@ def db_session():
         "sqlite:///./test_data/test.db", connect_args={"check_same_thread": False}
     )
 
-    from src.app.storage.models import Assistant, IngestionRecord  # noqa: F401
+    from app.storage.models import Assistant, IngestionRecord  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
 

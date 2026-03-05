@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from src.app.rag.retrieval.rerank.external_placeholder import ExternalReranker
-from src.app.rag.retrieval.rerank.local_reranker import LocalReranker
+from app.rag.retrieval.rerank.external_placeholder import ExternalReranker
+from app.rag.retrieval.rerank.local_reranker import LocalReranker
 
 
 class TestLocalReranker:

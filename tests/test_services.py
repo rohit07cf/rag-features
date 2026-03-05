@@ -5,10 +5,10 @@ from __future__ import annotations
 import pytest
 from unittest.mock import AsyncMock
 
-from src.app.domain.models.errors import NotFoundError, ValidationError
-from src.app.domain.services.chat_service import ChatService
-from src.app.domain.services.ingestion_service import IngestionService
-from src.app.domain.services.assistants_service import AssistantsService
+from app.domain.models.errors import NotFoundError, ValidationError
+from app.domain.services.chat_service import ChatService
+from app.domain.services.ingestion_service import IngestionService
+from app.domain.services.assistants_service import AssistantsService
 
 
 # ── ChatService ──────────────────────────────────────────────────
@@ -146,7 +146,7 @@ class TestIngestionServiceValidation:
             service.validate_upload("nonexistent_id", ["file.pdf"])
 
     def test_validate_non_rag_assistant(self, db_session):
-        from src.app.storage import assistants_repo
+        from app.storage import assistants_repo
 
         assistant = assistants_repo.create_assistant(
             db_session,
@@ -162,7 +162,7 @@ class TestIngestionServiceValidation:
             service.validate_upload(assistant.id, ["file.pdf"])
 
     def test_validate_unsupported_file_type(self, db_session):
-        from src.app.storage import assistants_repo
+        from app.storage import assistants_repo
 
         assistant = assistants_repo.create_assistant(
             db_session,
@@ -178,7 +178,7 @@ class TestIngestionServiceValidation:
             service.validate_upload(assistant.id, ["data.csv"])
 
     def test_validate_success(self, db_session):
-        from src.app.storage import assistants_repo
+        from app.storage import assistants_repo
 
         assistant = assistants_repo.create_assistant(
             db_session,
@@ -201,7 +201,7 @@ class TestIngestionServiceStatus:
             service.get_ingestion_status("nonexistent")
 
     def test_status_returns_correct_data(self, db_session):
-        from src.app.storage import assistants_repo
+        from app.storage import assistants_repo
 
         assistant = assistants_repo.create_assistant(
             db_session,

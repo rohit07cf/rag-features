@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.app.domain.pipelines.retrieval_pipeline import RetrievalPipeline
+from app.domain.pipelines.retrieval_pipeline import RetrievalPipeline
 
 
 class FakeEmbedder:

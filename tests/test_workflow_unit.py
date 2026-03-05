@@ -47,37 +47,37 @@ class TestChunkText:
     """Tests for centralized chunker registry (get_chunker from base.py)."""
 
     def test_get_chunker_recursive(self):
-        from src.app.rag.chunking.base import get_chunker
+        from app.rag.chunking.base import get_chunker
 
         chunker = get_chunker("recursive")
         assert chunker.name == "recursive"
 
     def test_get_chunker_token(self):
-        from src.app.rag.chunking.base import get_chunker
+        from app.rag.chunking.base import get_chunker
 
         chunker = get_chunker("token")
         assert chunker.name == "token"
 
     def test_get_chunker_heading(self):
-        from src.app.rag.chunking.base import get_chunker
+        from app.rag.chunking.base import get_chunker
 
         chunker = get_chunker("heading_aware")
         assert chunker.name == "heading_aware"
 
     def test_get_chunker_adaptive(self):
-        from src.app.rag.chunking.base import get_chunker
+        from app.rag.chunking.base import get_chunker
 
         chunker = get_chunker("adaptive")
         assert chunker.name == "adaptive"
 
     def test_get_chunker_default(self):
-        from src.app.rag.chunking.base import get_chunker
+        from app.rag.chunking.base import get_chunker
 
         chunker = get_chunker("unknown_strategy")
         assert chunker.name == "recursive"  # Falls back to recursive
 
     def test_get_chunker_contextual(self):
-        from src.app.rag.chunking.base import get_chunker
+        from app.rag.chunking.base import get_chunker
 
         chunker = get_chunker("contextual_docintel")
         assert chunker.name == "contextual_docintel"
