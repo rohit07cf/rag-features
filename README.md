@@ -98,8 +98,11 @@ pip install -e ".[dev]"
 # Start Temporal (needs a running Temporal server)
 python -m app.workflows.worker &
 
-# Start FastAPI
-uvicorn app.main:app --reload --port 8000 &
+# Start FastAPI (with advanced file watching)
+python dev_server.py &
+
+# Alternative: Use uvicorn directly (basic watching)
+# uvicorn app.main:app --reload --port 8000 &
 
 # Start Streamlit
 streamlit run app/ui/streamlit_app.py --server.port 8501
