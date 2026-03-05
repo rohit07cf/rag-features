@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlmodel import Session
+from typing import List
 
 from app.api.schemas import UploadResponse
 from app.deps import get_db
@@ -39,8 +40,8 @@ async def upload_documents(
         "recursive",
         description="Text chunking strategy: recursive, token, heading_aware, adaptive, contextual_docintel",
     ),
-    files: list[UploadFile] = File(
-        ...,
+    files: List[UploadFile] = File(
+        min_items=1,
         description="Multiple files to upload. Supported: PDF (.pdf), Word (.docx), Text (.txt). Max 50MB per file.",
     ),
     db: Session = Depends(get_db),
