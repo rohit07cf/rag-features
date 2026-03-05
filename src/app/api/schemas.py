@@ -11,10 +11,11 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from src.domain.models.enums import AssistantType, ChunkStrategy, LLMProvider
+from src.app.domain.models.enums import AssistantType, ChunkStrategy, LLMProvider
 
 
 # ── Assistants ────────────────────────────────────────────────────
+
 
 class AssistantCreate(BaseModel):
     user_id: str
@@ -47,6 +48,7 @@ class RagStatusResponse(BaseModel):
 
 # ── Documents / Ingestion ────────────────────────────────────────
 
+
 class UploadResponse(BaseModel):
     document_id: str
     ingestion_id: str
@@ -63,6 +65,7 @@ class IngestionStatusResponse(BaseModel):
 
 
 # ── Chat ─────────────────────────────────────────────────────────
+
 
 class ChatMessage(BaseModel):
     role: str = "user"
@@ -95,8 +98,10 @@ class ChatResponse(BaseModel):
 
 # ── Error ────────────────────────────────────────────────────────
 
+
 class ErrorResponse(BaseModel):
     """Consistent error response envelope."""
+
     error_code: str
     message: str
     details: str = ""

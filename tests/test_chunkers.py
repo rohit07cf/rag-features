@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
 
-from src.rag.chunking.adaptive import AdaptiveChunker
-from src.rag.chunking.heading_aware import HeadingAwareChunker
-from src.rag.chunking.recursive import RecursiveChunker
-from src.rag.chunking.token import TokenChunker
+from src.app.rag.chunking.adaptive import AdaptiveChunker
+from src.app.rag.chunking.heading_aware import HeadingAwareChunker
+from src.app.rag.chunking.recursive import RecursiveChunker
+from src.app.rag.chunking.token import TokenChunker
 
 
 class TestRecursiveChunker:

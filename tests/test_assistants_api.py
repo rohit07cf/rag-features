@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from src.app.storage.assistants_repo import (
     create_assistant,
@@ -86,7 +85,7 @@ class TestRagStatus:
             model="gpt-4.1-mini",
         )
 
-        record = create_ingestion_record(
+        _record = create_ingestion_record(
             db_session,
             assistant_id=assistant.id,
             user_id="user_rag2",

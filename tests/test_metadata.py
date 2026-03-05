@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from src.rag.chunking.base import Chunk
-from src.rag.chunking.contextual_docintel import ContextualDocIntelChunker
+from src.app.rag.chunking.base import Chunk
+from src.app.rag.chunking.contextual_docintel import ContextualDocIntelChunker
 
 
 class TestChunkMetadata:

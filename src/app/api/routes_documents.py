@@ -7,8 +7,8 @@ from sqlmodel import Session
 
 from src.app.api.schemas import UploadResponse
 from src.app.deps import get_db
-from src.domain.models.errors import NotFoundError, ValidationError
-from src.domain.services.ingestion_service import IngestionService
+from src.app.domain.models.errors import NotFoundError, ValidationError
+from src.app.domain.services.ingestion_service import IngestionService
 
 router = APIRouter(prefix="/v1/documents", tags=["documents"])
 

@@ -10,13 +10,16 @@ from fastapi.responses import JSONResponse
 
 from src.app.logging import setup_logging
 from src.app.storage.db import create_tables
-from src.domain.models.errors import (
-    AppError,
+from src.app.domain.models.errors import (
     ConfigError,
     ExternalServiceError,
     NotFoundError,
     ValidationError,
 )
+from src.app.api.routes_assistants import router as assistants_router
+from src.app.api.routes_chat import router as chat_router
+from src.app.api.routes_documents import router as documents_router
+from src.app.api.routes_ingestions import router as ingestions_router
 
 
 @asynccontextmanager
@@ -65,7 +68,11 @@ async def validation_handler(request: Request, exc: ValidationError):
 async def external_service_handler(request: Request, exc: ExternalServiceError):
     return JSONResponse(
         status_code=502,
-        content={"error_code": "EXTERNAL_SERVICE_ERROR", "message": exc.message, "details": exc.details},
+        content={
+            "error_code": "EXTERNAL_SERVICE_ERROR",
+            "message": exc.message,
+            "details": exc.details,
+        },
     )
 
 
@@ -78,10 +85,6 @@ async def config_error_handler(request: Request, exc: ConfigError):
 
 
 # Register routers
-from src.app.api.routes_assistants import router as assistants_router
-from src.app.api.routes_chat import router as chat_router
-from src.app.api.routes_documents import router as documents_router
-from src.app.api.routes_ingestions import router as ingestions_router
 
 app.include_router(assistants_router)
 app.include_router(documents_router)

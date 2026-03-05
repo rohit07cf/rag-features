@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from src.rag.llms.anthropic_llm import AnthropicLLM
-from src.rag.llms.factory import PROVIDER_MODELS, create_llm, resolve_model
-from src.rag.llms.openai_llm import OpenAILLM
+from src.app.rag.llms.anthropic_llm import AnthropicLLM
+from src.app.rag.llms.factory import PROVIDER_MODELS, create_llm, resolve_model
+from src.app.rag.llms.openai_llm import OpenAILLM
 
 
 class TestResolveModel:

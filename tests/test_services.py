@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import os
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
-from src.domain.models.errors import NotFoundError, ValidationError
-from src.domain.services.chat_service import ChatService
-from src.domain.services.ingestion_service import IngestionService
-from src.domain.services.assistants_service import AssistantsService
+from src.app.domain.models.errors import NotFoundError, ValidationError
+from src.app.domain.services.chat_service import ChatService
+from src.app.domain.services.ingestion_service import IngestionService
+from src.app.domain.services.assistants_service import AssistantsService
 
 
 # ── ChatService ──────────────────────────────────────────────────
@@ -74,9 +73,7 @@ class TestChatServiceModelOnly:
         service = ChatService(memory=memory)
         llm = FakeLLM()
 
-        response = await service.chat_model_only(
-            llm=llm, message="Hi", conversation_id="conv123"
-        )
+        response = await service.chat_model_only(llm=llm, message="Hi", conversation_id="conv123")
         assert response.conversation_id == "conv123"
 
     @pytest.mark.asyncio
@@ -85,9 +82,7 @@ class TestChatServiceModelOnly:
         service = ChatService(memory=memory)
         llm = FakeLLM(answer="bot reply")
 
-        response = await service.chat_model_only(
-            llm=llm, message="user msg", conversation_id="c1"
-        )
+        _response = await service.chat_model_only(llm=llm, message="user msg", conversation_id="c1")
 
         history = memory.get_history("c1")
         assert len(history) == 2

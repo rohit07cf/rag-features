@@ -12,6 +12,7 @@ from src.app.storage.models import Assistant, IngestionRecord
 
 # ── Assistants ────────────────────────────────────────────────────
 
+
 def create_assistant(session: Session, **kwargs) -> Assistant:
     assistant = Assistant(**kwargs)
     session.add(assistant)
@@ -25,11 +26,14 @@ def get_assistant(session: Session, assistant_id: str) -> Optional[Assistant]:
 
 
 def list_assistants(session: Session, user_id: str) -> list[Assistant]:
-    stmt = select(Assistant).where(Assistant.user_id == user_id).order_by(Assistant.created_at.desc())
+    stmt = (
+        select(Assistant).where(Assistant.user_id == user_id).order_by(Assistant.created_at.desc())
+    )
     return list(session.exec(stmt).all())
 
 
 # ── Ingestion Records ────────────────────────────────────────────
+
 
 def create_ingestion_record(session: Session, **kwargs) -> IngestionRecord:
     record = IngestionRecord(**kwargs)

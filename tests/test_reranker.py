@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from src.rag.retrieval.rerank.external_placeholder import ExternalReranker
-from src.rag.retrieval.rerank.local_reranker import LocalReranker
+from src.app.rag.retrieval.rerank.external_placeholder import ExternalReranker
+from src.app.rag.retrieval.rerank.local_reranker import LocalReranker
 
 
 class TestLocalReranker:
@@ -32,10 +32,7 @@ class TestLocalReranker:
         reranker = LocalReranker()
         reranker._model = "unavailable"
 
-        chunks = [
-            {"text": f"chunk {i}", "score": i * 0.1}
-            for i in range(10)
-        ]
+        chunks = [{"text": f"chunk {i}", "score": i * 0.1} for i in range(10)]
 
         result = reranker.rerank("query", chunks, top_k=3)
         assert len(result) == 3

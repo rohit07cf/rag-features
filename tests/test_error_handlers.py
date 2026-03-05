@@ -31,13 +31,16 @@ class TestExceptionHandlers:
 
     def test_validation_error_returns_422(self, client):
         """Pydantic validation errors return 422 from FastAPI."""
-        r = client.post("/v1/assistants", json={
-            "user_id": "u1",
-            "name": "Bad",
-            "type": "invalid_type",
-            "provider": "openai",
-            "model": "gpt-4o",
-        })
+        r = client.post(
+            "/v1/assistants",
+            json={
+                "user_id": "u1",
+                "name": "Bad",
+                "type": "invalid_type",
+                "provider": "openai",
+                "model": "gpt-4o",
+            },
+        )
         assert r.status_code == 422
 
     def test_ingestion_not_found(self, client):

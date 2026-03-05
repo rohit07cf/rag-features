@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
-from src.domain.pipelines.retrieval_pipeline import RetrievalPipeline
+from src.app.domain.pipelines.retrieval_pipeline import RetrievalPipeline
 
 
 class FakeEmbedder:
@@ -84,8 +83,7 @@ class TestRetrievalPipeline:
     @pytest.mark.asyncio
     async def test_respects_top_k(self):
         candidates = [
-            {"text": f"chunk {i}", "score": i * 0.1, "token_count": 10}
-            for i in range(10)
+            {"text": f"chunk {i}", "score": i * 0.1, "token_count": 10} for i in range(10)
         ]
         pipeline = RetrievalPipeline(
             embedder=FakeEmbedder(),

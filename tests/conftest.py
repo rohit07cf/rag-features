@@ -19,7 +19,9 @@ os.environ["APP_ENV"] = "test"
 def db_session():
     """Provide a clean SQLite session for each test."""
     os.makedirs("test_data", exist_ok=True)
-    engine = create_engine("sqlite:///./test_data/test.db", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        "sqlite:///./test_data/test.db", connect_args={"check_same_thread": False}
+    )
 
     from src.app.storage.models import Assistant, IngestionRecord  # noqa: F401
 
