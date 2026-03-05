@@ -1,5 +1,20 @@
 """Temporal workflow for durable document ingestion.
 
+This workflow transforms raw documents into searchable RAG knowledge:
+
+Document Processing Pipeline:
+1. Extract: Pull text from PDFs, Word docs, etc.
+2. Clean: Remove formatting artifacts, normalize text
+3. Chunk: Split into meaningful segments (sentences, paragraphs, sections)
+4. Embed: Convert text chunks to vector representations
+5. Store: Save vectors in Pinecone for fast similarity search
+
+Why chunking? LLMs have context limits, so we split documents into
+bite-sized pieces that fit in the context window while preserving meaning.
+
+Why embeddings? Convert human language to numbers so computers can
+measure similarity between questions and document content.
+
 Pipeline: extract -> clean -> chunk -> embed batches -> upsert Pinecone
 """
 
@@ -20,7 +35,20 @@ with workflow.unsafe.imports_passed_through():
 
 @workflow.defn
 class IngestionWorkflow:
-    """Durable ingestion: extract → clean → chunk → embed → upsert."""
+    """Durable ingestion: extract → clean → chunk → embed → upsert.
+
+    Real-Time Document Processing:
+    1. User uploads "company_handbook.pdf"
+    2. Extract text from PDF pages
+    3. Clean formatting (remove headers, footers, tables)
+    4. Split into semantic chunks (paragraphs, sections)
+    5. Convert each chunk to vector embedding
+    6. Store vectors in database for future retrieval
+    7. Later: "What's our vacation policy?" → finds relevant chunks
+
+    Uses Temporal for reliability - if server crashes during embedding,
+    workflow resumes from last completed step.
+    """
 
     def __init__(self) -> None:
         self._progress = {"current_step": "pending", "progress_pct": 0}
@@ -41,7 +69,9 @@ class IngestionWorkflow:
         activity_timeout = timedelta(minutes=10)
 
         try:
-            # Step 1: Extract text
+            # Step 1: Extract Text from Document
+            # Convert PDF/Word/etc. to plain text
+            # Example: PDF pages → continuous text stream
             self._progress = {"current_step": "extracting", "progress_pct": 10}
             raw_text = await workflow.execute_activity(
                 extract_text,
@@ -49,7 +79,9 @@ class IngestionWorkflow:
                 start_to_close_timeout=activity_timeout,
             )
 
-            # Step 2: Clean text
+            # Step 2: Clean Extracted Text
+            # Remove artifacts from PDF conversion (headers, footers, tables)
+            # Normalize whitespace, fix encoding issues
             self._progress = {"current_step": "cleaning", "progress_pct": 25}
             cleaned_text = await workflow.execute_activity(
                 clean_text,
@@ -57,20 +89,26 @@ class IngestionWorkflow:
                 start_to_close_timeout=activity_timeout,
             )
 
-            # Step 3: Chunk text
+            # Step 3: Chunk Text into Segments
+            # Split long document into smaller, meaningful pieces
+            # Strategy examples: by paragraphs, sentences, or semantic sections
+            # Each chunk ~200-500 words for optimal retrieval
             self._progress = {"current_step": "chunking", "progress_pct": 40}
             chunks = await workflow.execute_activity(
                 chunk_text,
                 {
                     "text": cleaned_text,
                     "document_id": document_id,
-                    "strategy": chunk_strategy,
+                    "strategy": chunk_strategy,  # "recursive", "heading_aware", etc.
                     "file_path": file_path,
                 },
                 start_to_close_timeout=activity_timeout,
             )
 
-            # Step 4: Embed batches
+            # Step 4: Convert Chunks to Vector Embeddings
+            # Transform text into numerical vectors (arrays of numbers)
+            # Example: "Solar power is renewable" → [0.1, -0.3, 0.8, ...]
+            # Enables mathematical similarity comparison
             self._progress = {"current_step": "embedding", "progress_pct": 60}
             embedded_chunks = await workflow.execute_activity(
                 embed_batches,
@@ -78,7 +116,10 @@ class IngestionWorkflow:
                 start_to_close_timeout=activity_timeout,
             )
 
-            # Step 5: Upsert to Pinecone
+            # Step 5: Store Vectors in Database
+            # Save embeddings to Pinecone vector database
+            # Organized by assistant_id for multi-tenant isolation
+            # Enables fast similarity search during RAG queries
             self._progress = {"current_step": "upserting", "progress_pct": 80}
             result = await workflow.execute_activity(
                 upsert_pinecone,

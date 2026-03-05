@@ -6,6 +6,7 @@ __pycache__/
 dist/
 build/
 .env
+.env.example
 data/
 test_data/
 *.db

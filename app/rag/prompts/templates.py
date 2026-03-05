@@ -1,4 +1,31 @@
-"""Prompt templates for RAG conversations with citations."""
+"""Prompt templates for RAG conversations with citations.
+
+This is where retrieved chunks get formatted into LLM prompts.
+
+RAG Prompt Engineering:
+1. System instructions: Tell LLM how to use context and cite sources
+2. Context block: Retrieved chunks formatted with metadata
+3. User question: The actual query
+4. Conversation history: Previous messages for continuity
+
+The goal: Make LLM answer using provided facts, not training data.
+Include citations so users can verify information.
+
+Example Final Prompt:
+```
+System: You are a knowledgeable assistant... [instructions]
+
+Context:
+[Source 1] (Document: hr_policy.pdf, Pages: 5-6)
+Remote work is available to all employees...
+
+[Source 2] (Document: handbook.pdf, Pages: 12)
+Benefits include flexible hours...
+
+User: What are the remote work benefits?
+Assistant: Remote work offers flexible hours [Source 2] and is available to all employees [Source 1].
+```
+"""
 
 from __future__ import annotations
 
@@ -33,8 +60,16 @@ def build_rag_prompt(
 ) -> list[dict]:
     """Build the full message list for a RAG completion.
 
-    Returns:
-        List of message dicts ready for the LLM.
+    This function assembles the complete prompt that goes to the LLM.
+
+    Real-Time Assembly:
+    1. Take retrieved chunks from vector search
+    2. Format each chunk with source metadata (document, pages, headings)
+    3. Add system instructions for citation and context usage
+    4. Include conversation history for context
+    5. Structure as proper chat messages for LLM API
+
+    Result: LLM receives focused, factual context + clear instructions
     """
     # Build context block from chunks
     source_blocks = []

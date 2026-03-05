@@ -1,4 +1,38 @@
-"""FastAPI application entry point."""
+"""FastAPI application entry point.
+
+This is the heart of the RAG (Retrieval-Augmented Generation) system.
+
+Complete RAG Flow - End to End:
+================================
+
+1. DOCUMENT INGESTION (Offline/Batch):
+   User uploads PDF → Temporal workflow → Extract text → Chunk → Embed → Store in Pinecone
+   Result: Knowledge base of vectorized document chunks
+
+2. USER QUERY PROCESSING (Real-time):
+   User asks question → Convert to vector → Search Pinecone → Rerank → Pack context
+
+3. ANSWER GENERATION (Real-time):
+   LLM receives: [Retrieved context] + [User question] → Generates cited answer
+
+4. RESPONSE WITH CITATIONS:
+   User gets factual answer + source references for verification
+
+Key Components:
+- FastAPI: REST API endpoints
+- Temporal: Reliable document processing workflows
+- Pinecone: Vector database for similarity search
+- OpenAI: Embeddings + LLM generation
+- Reranking: Cross-encoders for better relevance
+
+Real-Time Example:
+User: "What's our return policy?"
+1. Query → vector search → finds policy chunks
+2. LLM → "Returns accepted within 30 days [Source 1, p.5]"
+3. User → clicks citation → sees original policy document
+
+This system transforms static documents into interactive, accurate chat assistants.
+"""
 
 from __future__ import annotations
 
@@ -24,6 +58,13 @@ from app.api.routes_ingestions import router as ingestions_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Application startup/shutdown lifecycle.
+
+    Real-time initialization:
+    - Setup structured logging for monitoring
+    - Create database tables for assistants/documents metadata
+    - System ready to accept document uploads and queries
+    """
     setup_logging()
     create_tables()
     yield
