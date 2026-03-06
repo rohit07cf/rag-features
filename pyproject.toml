@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rag-temporal-pinecone-docintel-ui"
-version = "0.1.0"
+version = "0.1.1"
 description = "Production RAG platform with Temporal workflows, Pinecone, Azure Doc Intelligence, and Streamlit UI"
 requires-python = ">=3.11"
 dependencies = [
