@@ -11,14 +11,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml .
 COPY app/ app/
 
-# Install Python dependencies and verify src is importable from site-packages
+# Install Python dependencies and verify app is importable from site-packages
 RUN pip install --no-cache-dir ".[dev]" \
-    && python -c "import src; print('src installed to site-packages OK')"
+    && python -c "import app; print('app installed to site-packages OK')"
 
 # Copy remaining files (tests, config, deploy scripts, etc.)
 COPY . .
 
-# Ensure 'src' is importable (site-packages from pip install, /app as fallback)
+# Ensure 'app' is importable (site-packages from pip install, /app as fallback)
 ENV PYTHONPATH=/app
 
 # Create data directory and ensure scripts are executable
