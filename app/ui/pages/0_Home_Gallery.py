@@ -96,12 +96,23 @@ else:
 
             btn_cols = st.columns(2)
             with btn_cols[0]:
-                if st.button("💬 Chat", key=f"chat_{a['id']}", use_container_width=True):
+                # RAG assistants need documents before chatting
+                chat_disabled = a_type == "rag" and not is_ready
+                chat_help = "Upload documents first" if chat_disabled else None
+                if st.button(
+                    "💬 Chat",
+                    key=f"chat_{a['id']}",
+                    use_container_width=True,
+                    disabled=chat_disabled,
+                    help=chat_help,
+                ):
                     st.session_state["selected_assistant_id"] = a["id"]
                     st.session_state["selected_assistant"] = a
+                    st.session_state["chat_messages"] = []
+                    st.session_state["conversation_id"] = None
                     st.switch_page("pages/3_Chat_Assistant.py")
             with btn_cols[1]:
-                if a_type == "rag" and not is_ready:
+                if a_type == "rag":
                     if st.button("📄 Upload", key=f"upload_{a['id']}", use_container_width=True):
                         st.session_state["selected_assistant_id"] = a["id"]
                         st.session_state["selected_assistant"] = a

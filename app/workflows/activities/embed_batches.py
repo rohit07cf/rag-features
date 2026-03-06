@@ -63,11 +63,13 @@ async def embed_batches(params: dict) -> dict:
                 for c in batch
             ]
 
-            # Upsert this batch
+            # Upsert to the assistant's namespace so retrieval
+            # (which queries namespace=assistant_id) can find the vectors.
             batch_count = store.upsert_vectors(
                 ids=ids,
                 vectors=vectors,
                 metadatas=metadatas,
+                namespace=assistant_id,
             )
             total_upserted += batch_count
     except ApplicationError:
