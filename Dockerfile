@@ -11,17 +11,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml .
 COPY src/ src/
 
-# Install Python dependencies and verify src is importable from site-packages
-RUN pip install --no-cache-dir ".[dev]" \
-    && python -c "import src; print('src installed to site-packages OK')"
+# Install Python dependencies
+RUN pip install --no-cache-dir ".[dev]"
 
 # Copy remaining files (tests, config, deploy scripts, etc.)
 COPY . .
 
-# Ensure 'src' is importable (site-packages from pip install, /app as fallback)
+# Ensure src is importable via PYTHONPATH
 ENV PYTHONPATH=/app
 
 # Create data directory and ensure scripts are executable
 RUN mkdir -p /app/data && (chmod +x /app/deploy/*.sh 2>/dev/null || true)
+
+# Verify src is importable at build time
+RUN python -c "import sys; print('sys.path:', sys.path); import src; print('OK: src found at', src.__file__)"
 
 EXPOSE 8000 8501
