@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 
 import streamlit as st
@@ -137,6 +138,14 @@ if uploaded_files:
 
             # ── Progress tracking ────────────────────────────────────────
             st.markdown("### 📊 Ingestion Progress")
+
+            temporal_ui_url = os.getenv(
+                "TEMPORAL_UI_URL",
+                "https://ui-production-c444.up.railway.app",
+            )
+            st.markdown(
+                f"[View workflows in Temporal UI]({temporal_ui_url}/namespaces/default/workflows)"
+            )
 
             ingestion_ids = [r["ingestion_id"] for r in results]
             filenames = {r["ingestion_id"]: r["filename"] for r in results}

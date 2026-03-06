@@ -62,6 +62,7 @@ class IngestionStatusResponse(BaseModel):
     current_step: str
     progress_pct: int
     error_message: str
+    workflow_id: str = ""
 
 
 # ── Chat ─────────────────────────────────────────────────────────

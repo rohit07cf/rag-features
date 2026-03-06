@@ -101,10 +101,12 @@ class IngestionService:
                     assistant_id=assistant_id,
                     user_id=user_id,
                 )
+                record.workflow_id = wf_id
+                self._db.add(record)
+                self._db.commit()
                 assistants_repo.update_ingestion_state(
                     self._db, record.id, state="running"
                 )
-                record.workflow_id = wf_id
             except Exception as exc:
                 logger.warning("Temporal workflow start failed: %s — marking running", exc)
                 assistants_repo.update_ingestion_state(self._db, record.id, state="running")
@@ -132,4 +134,5 @@ class IngestionService:
             "current_step": record.current_step,
             "progress_pct": record.progress_pct,
             "error_message": record.error_message,
+            "workflow_id": record.workflow_id,
         }
