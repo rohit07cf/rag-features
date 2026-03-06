@@ -20,7 +20,7 @@ COPY . .
 # Ensure 'src' is importable
 ENV PYTHONPATH=/app
 
-# Create data directory
-RUN mkdir -p /app/data
+# Create data directory and ensure scripts are executable
+RUN mkdir -p /app/data && chmod +x /app/deploy/*.sh
 
 EXPOSE 8000 8501
