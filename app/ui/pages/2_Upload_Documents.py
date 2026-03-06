@@ -21,13 +21,13 @@ assistant = st.session_state.get("selected_assistant")
 if not assistant:
     st.warning("No assistant selected. Please create or select one first.")
     if st.button("➕ Create Assistant"):
-        st.switch_page("app/ui/pages/1_Create_Assistant.py")
+        st.switch_page("pages/1_Create_Assistant.py")
     st.stop()
 
 if assistant.get("type") != "rag":
     st.info(f"**{assistant['name']}** is a model-only assistant (no documents needed).")
     if st.button("💬 Go to Chat"):
-        st.switch_page("app/ui/pages/3_Chat_Assistant.py")
+        st.switch_page("pages/3_Chat_Assistant.py")
     st.stop()
 
 st.markdown(

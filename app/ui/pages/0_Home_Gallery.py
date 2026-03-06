@@ -20,7 +20,7 @@ st.markdown("---")
 col_cta, col_refresh = st.columns([3, 1])
 with col_cta:
     if st.button("➕ Create New Assistant", type="primary", use_container_width=True):
-        st.switch_page("app/ui/pages/1_Create_Assistant.py")
+        st.switch_page("pages/1_Create_Assistant.py")
 with col_refresh:
     refresh = st.button("🔄 Refresh", use_container_width=True)
 
@@ -99,13 +99,13 @@ else:
                 if st.button("💬 Chat", key=f"chat_{a['id']}", use_container_width=True):
                     st.session_state["selected_assistant_id"] = a["id"]
                     st.session_state["selected_assistant"] = a
-                    st.switch_page("app/ui/pages/3_Chat_Assistant.py")
+                    st.switch_page("pages/3_Chat_Assistant.py")
             with btn_cols[1]:
                 if a_type == "rag" and not is_ready:
                     if st.button("📄 Upload", key=f"upload_{a['id']}", use_container_width=True):
                         st.session_state["selected_assistant_id"] = a["id"]
                         st.session_state["selected_assistant"] = a
-                        st.switch_page("app/ui/pages/2_Upload_Documents.py")
+                        st.switch_page("pages/2_Upload_Documents.py")
 
 # ── What this demonstrates ───────────────────────────────────────
 st.markdown("---")
