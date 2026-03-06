@@ -61,7 +61,8 @@ class IngestionWorkflow:
     async def run(self, params: dict[str, Any]) -> dict:
         ingestion_id = params["ingestion_id"]
         document_id = params["document_id"]
-        file_path = params["file_path"]
+        filename = params["filename"]
+        file_content_b64 = params["file_content_b64"]
         chunk_strategy = params["chunk_strategy"]
         assistant_id = params["assistant_id"]
         _user_id = params["user_id"]
@@ -75,7 +76,11 @@ class IngestionWorkflow:
             self._progress = {"current_step": "extracting", "progress_pct": 10}
             raw_text = await workflow.execute_activity(
                 extract_text,
-                {"file_path": file_path, "document_id": document_id},
+                {
+                    "filename": filename,
+                    "file_content_b64": file_content_b64,
+                    "document_id": document_id,
+                },
                 start_to_close_timeout=activity_timeout,
             )
 
@@ -100,7 +105,7 @@ class IngestionWorkflow:
                     "text": cleaned_text,
                     "document_id": document_id,
                     "strategy": chunk_strategy,  # "recursive", "heading_aware", etc.
-                    "file_path": file_path,
+                    "file_path": filename,
                 },
                 start_to_close_timeout=activity_timeout,
             )
