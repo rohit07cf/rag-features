@@ -1,0 +1,6 @@
+#!/bin/sh
+exec streamlit run src/ui/streamlit_app.py \
+    --server.port="${PORT:-8501}" \
+    --server.address=0.0.0.0 \
+    --theme.base=light \
+    --server.headless=true
