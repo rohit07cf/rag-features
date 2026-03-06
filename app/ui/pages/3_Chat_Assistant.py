@@ -19,7 +19,7 @@ assistant = st.session_state.get("selected_assistant")
 if not assistant:
     st.warning("No assistant selected. Please create or select one from the Gallery.")
     if st.button("🏠 Go to Gallery"):
-        st.switch_page("app/ui/pages/0_Home_Gallery.py")
+        st.switch_page("pages/0_Home_Gallery.py")
     st.stop()
 
 # Check if RAG assistant needs documents
@@ -33,7 +33,7 @@ if assistant.get("type") == "rag":
                 "This RAG assistant has no documents yet. Upload documents first for best results."
             )
             if st.button("📄 Upload Documents"):
-                st.switch_page("app/ui/pages/2_Upload_Documents.py")
+                st.switch_page("pages/2_Upload_Documents.py")
     except Exception:
         pass
 
