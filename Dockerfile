@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml .
 COPY app/ app/
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -e ".[dev]"
+# Install Python dependencies (non-editable for reliable imports in production)
+RUN pip install --no-cache-dir ".[dev]"
 
 # Copy remaining files (tests, config, docs, etc.)
 COPY . .
