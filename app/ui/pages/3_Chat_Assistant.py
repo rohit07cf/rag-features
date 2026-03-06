@@ -22,7 +22,7 @@ if not assistant:
         st.switch_page("pages/0_Home_Gallery.py")
     st.stop()
 
-# Check if RAG assistant needs documents
+# Gate: RAG assistants require at least one ingested document
 if assistant.get("type") == "rag":
     try:
         from app.ui.api_client import get_rag_status
@@ -30,10 +30,12 @@ if assistant.get("type") == "rag":
         rag_info = get_rag_status(assistant["id"])
         if not rag_info.get("has_documents"):
             st.warning(
-                "This RAG assistant has no documents yet. Upload documents first for best results."
+                "This RAG assistant has no documents yet. "
+                "Upload and ingest documents before chatting."
             )
-            if st.button("📄 Upload Documents"):
+            if st.button("📄 Upload Documents", type="primary"):
                 st.switch_page("pages/2_Upload_Documents.py")
+            st.stop()
     except Exception:
         pass
 

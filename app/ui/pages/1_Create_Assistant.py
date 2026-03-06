@@ -92,18 +92,14 @@ if submitted:
 
             st.session_state["selected_assistant_id"] = result["id"]
             st.session_state["selected_assistant"] = result
-            st.toast(f"✅ Assistant '{name}' created!", icon="🎉")
+            st.session_state["chat_messages"] = []
+            st.session_state["conversation_id"] = None
 
-            st.success(f"Assistant **{name}** created successfully!")
-
+            # Auto-navigate: RAG → Upload Documents, Model-only → Chat
             if a_type == "rag":
-                st.markdown("**Next step:** Upload documents to enable RAG.")
-                if st.button("📄 Upload Documents →", type="primary"):
-                    st.switch_page("pages/2_Upload_Documents.py")
+                st.switch_page("pages/2_Upload_Documents.py")
             else:
-                st.markdown("**Your assistant is ready!** Start chatting now.")
-                if st.button("💬 Start Chatting →", type="primary"):
-                    st.switch_page("pages/3_Chat_Assistant.py")
+                st.switch_page("pages/3_Chat_Assistant.py")
 
         except Exception as e:
             st.error(f"Failed to create assistant: {e}")

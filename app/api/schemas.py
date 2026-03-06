@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.domain.models.enums import AssistantType, ChunkStrategy, LLMProvider
 
@@ -25,6 +25,18 @@ class AssistantCreate(BaseModel):
     model: str
     system_prompt: str = ""
     default_chunk_strategy: ChunkStrategy = ChunkStrategy.RECURSIVE
+
+    @model_validator(mode="after")
+    def validate_provider_model(self):
+        from app.rag.llms.factory import PROVIDER_MODELS
+
+        allowed = PROVIDER_MODELS.get(self.provider.value, [])
+        if self.model not in allowed:
+            raise ValueError(
+                f"Model '{self.model}' is not valid for provider '{self.provider.value}'. "
+                f"Allowed models: {allowed}"
+            )
+        return self
 
 
 class AssistantResponse(BaseModel):
