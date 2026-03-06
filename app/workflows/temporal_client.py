@@ -23,7 +23,8 @@ async def get_client() -> Client:
 async def start_ingestion_workflow(
     ingestion_id: str,
     document_id: str,
-    file_path: str,
+    filename: str,
+    file_content_b64: str,
     chunk_strategy: str,
     assistant_id: str,
     user_id: str,
@@ -42,7 +43,8 @@ async def start_ingestion_workflow(
         {
             "ingestion_id": ingestion_id,
             "document_id": document_id,
-            "file_path": file_path,
+            "filename": filename,
+            "file_content_b64": file_content_b64,
             "chunk_strategy": chunk_strategy,
             "assistant_id": assistant_id,
             "user_id": user_id,

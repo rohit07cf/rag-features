@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import os
 import uuid
 
@@ -69,18 +70,14 @@ class IngestionService:
         Returns:
             List of {document_id, ingestion_id, filename, status} dicts.
         """
-        upload_dir = self._settings.upload_dir
-        os.makedirs(upload_dir, exist_ok=True)
-
         results: list[dict] = []
 
         for filename, content in files:
-            ext = os.path.splitext(filename)[1].lower()
             doc_id = uuid.uuid4().hex[:12]
-            file_path = os.path.join(upload_dir, f"{doc_id}{ext}")
 
-            with open(file_path, "wb") as fh:
-                fh.write(content)
+            # Encode file content as base64 to pass through Temporal
+            # (worker runs in a separate container with no shared filesystem)
+            file_content_b64 = base64.b64encode(content).decode("ascii")
 
             record = assistants_repo.create_ingestion_record(
                 self._db,
@@ -98,7 +95,8 @@ class IngestionService:
                 wf_id = await start_ingestion_workflow(
                     ingestion_id=record.id,
                     document_id=doc_id,
-                    file_path=file_path,
+                    filename=filename,
+                    file_content_b64=file_content_b64,
                     chunk_strategy=chunk_strategy,
                     assistant_id=assistant_id,
                     user_id=user_id,
