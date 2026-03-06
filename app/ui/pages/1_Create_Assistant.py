@@ -99,11 +99,11 @@ if submitted:
             if a_type == "rag":
                 st.markdown("**Next step:** Upload documents to enable RAG.")
                 if st.button("📄 Upload Documents →", type="primary"):
-                    st.switch_page("src/ui/pages/2_Upload_Documents.py")
+                    st.switch_page("app/ui/pages/2_Upload_Documents.py")
             else:
                 st.markdown("**Your assistant is ready!** Start chatting now.")
                 if st.button("💬 Start Chatting →", type="primary"):
-                    st.switch_page("src/ui/pages/3_Chat_Assistant.py")
+                    st.switch_page("app/ui/pages/3_Chat_Assistant.py")
 
         except Exception as e:
             st.error(f"Failed to create assistant: {e}")

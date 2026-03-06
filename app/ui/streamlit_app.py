@@ -64,14 +64,14 @@ with st.sidebar:
             """)
 
     st.divider()
-    st.page_link("src/ui/pages/0_Home_Gallery.py", label="🏠 Gallery", icon="🏠")
-    st.page_link("src/ui/pages/1_Create_Assistant.py", label="➕ Create", icon="➕")
+    st.page_link("app/ui/pages/0_Home_Gallery.py", label="🏠 Gallery", icon="🏠")
+    st.page_link("app/ui/pages/1_Create_Assistant.py", label="➕ Create", icon="➕")
 
     a = st.session_state.get("selected_assistant")
     if a and a.get("type") == "rag":
-        st.page_link("src/ui/pages/2_Upload_Documents.py", label="📄 Upload", icon="📄")
+        st.page_link("app/ui/pages/2_Upload_Documents.py", label="📄 Upload", icon="📄")
     if a:
-        st.page_link("src/ui/pages/3_Chat_Assistant.py", label="💬 Chat", icon="💬")
+        st.page_link("app/ui/pages/3_Chat_Assistant.py", label="💬 Chat", icon="💬")
 
 # ── Main area (redirect to Gallery) ─────────────────────────────
 st.markdown("# 🧠 Assistant Studio")
@@ -84,4 +84,4 @@ recruiter_demo_expander()
 
 st.markdown("---")
 st.info("👈 Use the sidebar to navigate, or go to the **Gallery** page to get started.")
-st.page_link("src/ui/pages/0_Home_Gallery.py", label="Open Gallery →", icon="🏠")
+st.page_link("app/ui/pages/0_Home_Gallery.py", label="Open Gallery →", icon="🏠")
