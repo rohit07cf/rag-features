@@ -39,11 +39,10 @@ class OpenAIEmbedder(BaseEmbedder):
     - Similarity: Compare question vector to document vectors
     """
 
-    def __init__(self, model: str = "text-embedding-3-small", api_key: str | None = None):
+    def __init__(self, model: str = "text-embedding-3-small", api_key: str | None = None, dimensions: int = 1024):
         self._model = model
         self._client = AsyncOpenAI(api_key=api_key) if api_key else AsyncOpenAI()
-        # text-embedding-3-small outputs 1536-dimensional vectors
-        self._dim = 1536
+        self._dim = dimensions
 
     @property
     def dimension(self) -> int:
@@ -63,6 +62,7 @@ class OpenAIEmbedder(BaseEmbedder):
         response = await self._client.embeddings.create(
             model=self._model,
             input=texts,
+            dimensions=self._dim,
         )
         # Extract vectors from API response
         return [item.embedding for item in response.data]
