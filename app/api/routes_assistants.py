@@ -37,8 +37,31 @@ def get_assistant(assistant_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{assistant_id}/rag_status", response_model=RagStatusResponse)
-def rag_status(assistant_id: str, db: Session = Depends(get_db)):
+async def rag_status(assistant_id: str, db: Session = Depends(get_db)):
     assistant = assistants_repo.get_assistant(db, assistant_id)
     if not assistant:
         raise HTTPException(404, "Assistant not found")
+
+    # Sync any "running" ingestion records with Temporal's actual state.
+    # The worker runs in a separate container with its own SQLite, so the
+    # API's DB never gets the succeeded/failed update from the workflow.
+    records = assistants_repo.list_ingestion_records(db, assistant_id)
+    running = [r for r in records if r.state == "running" and r.workflow_id]
+    if running:
+        from app.workflows.temporal_client import query_ingestion_progress
+
+        for record in running:
+            try:
+                progress = await query_ingestion_progress(record.workflow_id)
+                if progress and progress.get("current_step") in ("succeeded", "failed"):
+                    assistants_repo.update_ingestion_state(
+                        db,
+                        record.id,
+                        state=progress["current_step"],
+                        current_step=progress["current_step"],
+                        progress_pct=progress.get("progress_pct", 0),
+                    )
+            except Exception:
+                pass
+
     return assistants_repo.get_rag_status(db, assistant_id)
