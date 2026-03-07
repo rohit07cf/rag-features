@@ -28,27 +28,42 @@ CHUNK_STRATEGIES = {
     "contextual_docintel": "Azure Doc Intelligence — structural + contextual (requires Azure keys)",
 }
 
+
+def _sync_model_with_provider() -> None:
+    """Keep the selected model valid when provider changes."""
+    provider_key = st.session_state.get("create_assistant_provider", "openai")
+    available_models = MODELS[provider_key]
+    current_model = st.session_state.get("create_assistant_model")
+    if current_model not in available_models:
+        st.session_state["create_assistant_model"] = available_models[0]
+
 # ── Form ─────────────────────────────────────────────────────────
+# Provider/model selectors are intentionally outside the form so the UI reruns
+# immediately on provider changes and updates model options in real time.
+st.markdown("### Assistant Configuration")
+
+col1, col2 = st.columns(2)
+with col1:
+    a_type = st.selectbox(
+        "Type",
+        ["rag", "model_only"],
+        format_func=lambda x: "RAG Chat" if x == "rag" else "Model-only Chat",
+    )
+with col2:
+    provider = st.selectbox(
+        "LLM Provider",
+        ["openai", "anthropic"],
+        key="create_assistant_provider",
+        on_change=_sync_model_with_provider,
+        format_func=lambda x: "OpenAI GPT" if x == "openai" else "Anthropic Claude",
+    )
+
+_sync_model_with_provider()
+model = st.selectbox("Model", MODELS[provider], key="create_assistant_model")
+
 with st.form("create_assistant_form"):
-    st.markdown("### Assistant Configuration")
 
     name = st.text_input("Assistant Name", placeholder="e.g., Quarterly Report Analyst")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        a_type = st.selectbox(
-            "Type",
-            ["rag", "model_only"],
-            format_func=lambda x: "RAG Chat" if x == "rag" else "Model-only Chat",
-        )
-    with col2:
-        provider = st.selectbox(
-            "LLM Provider",
-            ["openai", "anthropic"],
-            format_func=lambda x: "OpenAI GPT" if x == "openai" else "Anthropic Claude",
-        )
-
-    model = st.selectbox("Model", MODELS[provider])
 
     chunk_strategy = "recursive"
     if a_type == "rag":
