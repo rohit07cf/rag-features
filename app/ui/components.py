@@ -25,8 +25,8 @@ def badge_row():
 
 
 def recruiter_demo_expander():
-    """Show the recruiter quick demo script."""
-    with st.expander("🎯 Recruiter Quick Demo", expanded=False):
+    """Show the quick demo script."""
+    with st.expander("🎯 Quick Demo", expanded=False):
         st.markdown("""
 **Try this 60-second demo:**
 
