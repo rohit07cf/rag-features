@@ -29,6 +29,8 @@ in ChatService. The route only orchestrates: parse → get deps → call service
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 
@@ -38,6 +40,7 @@ from app.deps import get_db
 from app.storage import assistants_repo
 
 router = APIRouter(prefix="/v1", tags=["chat"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -57,24 +60,37 @@ async def chat(body: ChatRequest, db: Session = Depends(get_db)):
     llm = get_llm(provider=assistant.provider, model=assistant.model)
     service = get_chat_service()
 
-    if assistant.type == "model_only":
-        # Basic chat: LLM responds using only training data
-        # Good for: General questions, creative tasks
-        # Bad for: Company-specific or factual questions
-        return await service.chat_model_only(
-            llm=llm,
-            message=body.message,
-            system_prompt=assistant.system_prompt or "",
-            conversation_id=body.conversation_id,
-        )
-    else:
-        # RAG chat: LLM gets relevant document context first
-        # Good for: Answering from your knowledge base
-        # Provides: Factual answers + source citations
-        return await service.chat_rag(
-            llm=llm,
-            message=body.message,
-            assistant_id=assistant.id,
-            system_prompt=assistant.system_prompt or "",
-            conversation_id=body.conversation_id,
-        )
+    try:
+        if assistant.type == "model_only":
+            # Basic chat: LLM responds using only training data
+            # Good for: General questions, creative tasks
+            # Bad for: Company-specific or factual questions
+            return await service.chat_model_only(
+                llm=llm,
+                message=body.message,
+                system_prompt=assistant.system_prompt or "",
+                conversation_id=body.conversation_id,
+            )
+        else:
+            # RAG chat: LLM gets relevant document context first
+            # Good for: Answering from your knowledge base
+            # Provides: Factual answers + source citations
+            return await service.chat_rag(
+                llm=llm,
+                message=body.message,
+                assistant_id=assistant.id,
+                system_prompt=assistant.system_prompt or "",
+                conversation_id=body.conversation_id,
+            )
+    except Exception as exc:
+        error_text = str(exc).lower()
+        if "not_found_error" in error_text and "model:" in error_text:
+            logger.warning("Provider model unavailable for assistant %s: %s", assistant.id, exc)
+            raise HTTPException(
+                status_code=502,
+                detail=(
+                    "The configured model is unavailable for the current provider/API key. "
+                    "Please choose a different model for this assistant."
+                ),
+            ) from exc
+        raise
