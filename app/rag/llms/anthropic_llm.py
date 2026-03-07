@@ -11,12 +11,12 @@ class AnthropicLLM(BaseLLM):
     """Async wrapper around Anthropic Messages API."""
 
     SUPPORTED_MODELS = [
-        "claude-3-5-sonnet-20241022",
-        "claude-3-5-haiku-20241022",
-        "claude-sonnet-4-20250514",
+        "claude-3-5-sonnet-latest",
+        "claude-3-5-haiku-latest",
+        "claude-sonnet-4-latest",
     ]
 
-    def __init__(self, model: str = "claude-3-5-sonnet-20241022", api_key: str | None = None):
+    def __init__(self, model: str = "claude-3-5-sonnet-latest", api_key: str | None = None):
         self._model = model
         self._client = AsyncAnthropic(api_key=api_key) if api_key else AsyncAnthropic()
 

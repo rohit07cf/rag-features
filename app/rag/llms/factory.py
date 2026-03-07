@@ -15,9 +15,14 @@ MODEL_ALIASES: dict[str, dict[str, str]] = {
         "gpt-4o": "gpt-4o",
     },
     "anthropic": {
-        "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
-        "claude-3-5-haiku": "claude-3-5-haiku-20241022",
-        "claude-sonnet-4": "claude-sonnet-4-20250514",
+        # Friendly UI aliases
+        "claude-3-5-sonnet": "claude-3-5-sonnet-latest",
+        "claude-3-5-haiku": "claude-3-5-haiku-latest",
+        "claude-sonnet-4": "claude-sonnet-4-latest",
+        # Backward-compatibility for previously persisted dated IDs
+        "claude-3-5-sonnet-20241022": "claude-3-5-sonnet-latest",
+        "claude-3-5-haiku-20241022": "claude-3-5-haiku-latest",
+        "claude-sonnet-4-20250514": "claude-sonnet-4-latest",
     },
 }
 

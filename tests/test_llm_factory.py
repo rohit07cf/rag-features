@@ -16,7 +16,11 @@ class TestResolveModel:
 
     def test_resolve_anthropic_alias(self):
         resolved = resolve_model("anthropic", "claude-3-5-sonnet")
-        assert resolved == "claude-3-5-sonnet-20241022"
+        assert resolved == "claude-3-5-sonnet-latest"
+
+    def test_resolve_anthropic_legacy_id(self):
+        resolved = resolve_model("anthropic", "claude-3-5-sonnet-20241022")
+        assert resolved == "claude-3-5-sonnet-latest"
 
     def test_resolve_unknown_passes_through(self):
         assert resolve_model("openai", "custom-model") == "custom-model"
@@ -33,7 +37,7 @@ class TestCreateLLM:
         llm = create_llm("anthropic", "claude-3-5-sonnet", api_key="sk-ant-test")
         assert isinstance(llm, AnthropicLLM)
         assert llm.provider_name == "anthropic"
-        assert llm.model_name == "claude-3-5-sonnet-20241022"
+        assert llm.model_name == "claude-3-5-sonnet-latest"
 
     def test_invalid_provider_raises(self):
         with pytest.raises(ValueError, match="Unsupported"):
