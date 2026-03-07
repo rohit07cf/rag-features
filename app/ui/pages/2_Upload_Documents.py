@@ -45,6 +45,12 @@ STRATEGIES = {
     "contextual_docintel": "Azure Doc Intelligence — contextual (requires Azure keys)",
 }
 
+# Keep this aligned with app/workflows/activities/embed_batches.py
+# which currently instantiates OpenAIEmbedder() with default settings.
+EMBEDDING_PROVIDER = "openai"
+EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_DIMENSIONS = 1024
+
 chunk_strategy = st.selectbox(
     "Chunking Strategy",
     list(STRATEGIES.keys()),
@@ -101,6 +107,12 @@ if uploaded_files:
     else:
         if st.button("🚀 Start Ingestion", type="primary", use_container_width=True):
             from app.ui.api_client import get_ingestion_status, upload_documents
+
+            st.info(
+                "Creating chunk embeddings with "
+                f"**{EMBEDDING_PROVIDER.title()} {EMBEDDING_MODEL}** "
+                f"({EMBEDDING_DIMENSIONS} dimensions)."
+            )
 
             # Prepare files with proper mime types
             files_data = []
